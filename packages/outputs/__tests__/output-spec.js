@@ -1,19 +1,30 @@
 import * as React from "react";
 import { shallow } from "enzyme";
 
-import { Output, StreamText, JupyterError } from "../src";
+import { StreamText, JupyterError } from "../src";
+import { Output as OutputSwitch } from "../src";
 
-describe("Output", () => {
+function OutputTestComponent({ output }) {
+  return (
+    <OutputSwitch output={output}>
+      {/* <ExecuteResult>
+        <DataExplorer />
+        <JSON />
+        <HTML />
+        <Plain />
+      </ExecuteResult> */}
+      <StreamText />
+      <JupyterError />
+    </OutputSwitch>
+  );
+}
+
+describe("OutputSwitch component", () => {
   it("handles stream data", () => {
     const output = { outputType: "stream", name: "stdout", text: "hey" };
-
-    const component = shallow(
-      <Output output={output}>
-        <StreamText />
-      </Output>
-    );
-    console.log(component);
-    expect(component.type()).toEqual(StreamText);
+    const component = shallow(<OutputTestComponent output={output} />);
+    expect(component.shallow().type()).toEqual(StreamText);
+    expect(component.shallow().length).toEqual(1);
   });
 
   it("handles errors/tracebacks", () => {
@@ -23,13 +34,8 @@ describe("Output", () => {
       ename: "NameError",
       evalue: "Yikes!"
     };
-
-    const component = shallow(
-      <Output output={output}>
-        <JupyterError />
-      </Output>
-    );
-    expect(component.type()).toEqual(JupyterError);
+    const component = shallow(<OutputTestComponent output={output} />);
+    expect(component.shallow().type()).toEqual(JupyterError);
 
     const outputNoTraceback = {
       outputType: "error",
@@ -38,10 +44,8 @@ describe("Output", () => {
     };
 
     const component2 = shallow(
-      <Output output={output}>
-        <JupyterError />
-      </Output>
+      <OutputTestComponent output={outputNoTraceback} />
     );
-    expect(component2.type()).toEqual(JupyterError);
+    expect(component2.shallow().type()).toEqual(JupyterError);
   });
 });
