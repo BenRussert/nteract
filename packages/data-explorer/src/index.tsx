@@ -7,6 +7,7 @@ import VizControls from "./VizControls";
 
 export { Display } from "./Display";
 export { Toolbar } from "./components/Toolbar";
+export { VizControls };
 
 const mediaType = "application/vnd.dataresource+json";
 

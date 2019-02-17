@@ -7,11 +7,9 @@ import { getDxProps } from "../__mocks__/dx-props";
 import DataExplorerProvider from "../src/index";
 import { Props } from "../src/index";
 
+import { Display, Toolbar, VizControls } from "../src/";
 import { Bar, Grid, Line, Summary } from "../src/charts/";
-import { Toolbar } from "../src/components/Toolbar";
-import { Display } from "../src/Display";
 import * as Dx from "../src/types";
-import VizControls from "../src/VizControls";
 
 describe.skip("DataExplorer Metadata props", () => {
   function DataExplorer(props: Props) {
@@ -130,7 +128,9 @@ describe("VizControls component", () => {
   });
 
   it("Renders the VizControls", () => {
-    const wrapper = mount(<DataExplorer data={dataExplorerProps.data} />);
+    const wrapper = mount(
+      <DataExplorer data={dataExplorerProps.data} initialView={"bar"} />
+    );
     expect(wrapper.find(Toolbar)).toHaveLength(1);
     expect(wrapper.find(VizControls)).toHaveLength(1);
   });

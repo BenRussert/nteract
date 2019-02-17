@@ -542,7 +542,12 @@ export default () => (
                         dim.name
                       ) !== -1 && "selected"}`}
                       onClick={() =>
-                        updateChart(fieldsReducer(selectedDimensions, dim.name))
+                        updateChart({
+                          selectedDimensions: fieldsReducer(
+                            selectedDimensions,
+                            dim.name
+                          )
+                        })
                       }
                       active={selectedDimensions.indexOf(dim.name) !== -1}
                     >
@@ -568,7 +573,12 @@ export default () => (
                         metric.name
                       ) !== -1 && "selected"}`}
                       onClick={() =>
-                        updateChart(fieldsReducer(selectedMetrics, metric.name))
+                        updateChart({
+                          selectedMetrics: fieldsReducer(
+                            selectedMetrics,
+                            metric.name
+                          )
+                        })
                       }
                       active={selectedMetrics.indexOf(metric.name) !== -1}
                     >
