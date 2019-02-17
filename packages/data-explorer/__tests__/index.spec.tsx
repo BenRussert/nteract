@@ -11,6 +11,7 @@ import { Bar, Grid, Line, Summary } from "../src/charts/";
 import { Toolbar } from "../src/components/Toolbar";
 import { Display } from "../src/Display";
 import * as Dx from "../src/types";
+import VizControls from "../src/VizControls";
 
 describe.skip("DataExplorer Metadata props", () => {
   function DataExplorer(props: Props) {
@@ -42,7 +43,7 @@ describe.skip("DataExplorer Metadata props", () => {
   });
 });
 
-describe.only("Toolbar component", () => {
+describe("Toolbar component", () => {
   function DataExplorer(props: Props) {
     return (
       <DataExplorerProvider {...props}>
@@ -51,7 +52,7 @@ describe.only("Toolbar component", () => {
       </DataExplorerProvider>
     );
   }
-  let dataExplorerProps, toolBar;
+  let dataExplorerProps;
   beforeEach(() => {
     dataExplorerProps = getDxProps();
   });
@@ -110,5 +111,27 @@ describe.only("Toolbar component", () => {
     );
     expect(wrapper.find(Toolbar)).toHaveLength(1);
     expect(wrapper.find(XYPlot)).toHaveLength(1);
+  });
+});
+
+describe("VizControls component", () => {
+  function DataExplorer(props: Props) {
+    return (
+      <DataExplorerProvider {...props}>
+        <Display />
+        <VizControls />
+        <Toolbar />
+      </DataExplorerProvider>
+    );
+  }
+  let dataExplorerProps, toolBar;
+  beforeEach(() => {
+    dataExplorerProps = getDxProps();
+  });
+
+  it("Renders the VizControls", () => {
+    const wrapper = mount(<DataExplorer data={dataExplorerProps.data} />);
+    expect(wrapper.find(Toolbar)).toHaveLength(1);
+    expect(wrapper.find(VizControls)).toHaveLength(1);
   });
 });

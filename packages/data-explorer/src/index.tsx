@@ -291,29 +291,8 @@ class DataExplorerProvider extends React.PureComponent<Partial<Props>, State> {
     this.updateChart({ colors: newColorArray });
   };
 
-  setLineType = (selectedLineType: LineType) => {
-    this.updateChart({ lineType: selectedLineType });
-  };
-
   setAreaType = (selectedAreaType: AreaType) => {
     this.updateChart({ areaType: selectedAreaType });
-  };
-
-  updateDimensions = (selectedDimension: string) => {
-    const oldDims = this.state.selectedDimensions;
-    const newDimensions =
-      oldDims.indexOf(selectedDimension) === -1
-        ? [...oldDims, selectedDimension]
-        : oldDims.filter(dimension => dimension !== selectedDimension);
-    this.updateChart({ selectedDimensions: newDimensions });
-  };
-  updateMetrics = (selectedMetric: string) => {
-    const oldMetrics = this.state.selectedMetrics;
-    const newMetrics =
-      oldMetrics.indexOf(selectedMetric) === -1
-        ? [...oldMetrics, selectedMetric]
-        : oldMetrics.filter(metric => metric !== selectedMetric);
-    this.updateChart({ selectedMetrics: newMetrics });
   };
 
   render() {

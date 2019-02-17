@@ -4,6 +4,7 @@ import * as React from "react";
 
 import { StyledButtonGroup } from "./components/button-group";
 import { ChartOptionTypes, controlHelpText } from "./docs/chart-docs";
+import { DxConsumer, DxContextValues } from "./index";
 
 import styled, { css } from "styled-components";
 import * as Dx from "./types";
@@ -239,6 +240,19 @@ const availableAreaTypes = [
   }
 ];
 
+// Pure "Reducer" to calculate new state "selectedMetrics" or "selectedDimensions"
+type SelectedFields = Array<Dx.Metric["name"]> | Array<Dx.Dimension["name"]>;
+function fieldsReducer(
+  selectedFields: SelectedFields,
+  newField: Dx.Metric["name"] | Dx.Field["name"]
+): SelectedFields {
+  const newMetrics =
+    selectedFields.indexOf(newField) === -1
+      ? [...selectedFields, newField]
+      : selectedFields.filter(fieldName => fieldName !== newField);
+  return newMetrics;
+}
+
 type ChartOptions = { [key in ChartOptionTypes]: string };
 interface VizControlParams {
   view: Dx.View;
@@ -251,314 +265,324 @@ interface VizControlParams {
   selectedMetrics: string[];
   hierarchyType: Dx.HierarchyType;
   summaryType: Dx.SummaryType;
-  networkType: string;
-  setLineType: (lineType: Dx.LineType) => void;
-  updateMetrics: (name: string) => void;
-  updateDimensions: (name: string) => void;
+  networkType: Dx.NetworkType;
   lineType: Dx.LineType;
   areaType: Dx.AreaType;
-  setAreaType: (label: Dx.AreaType) => void;
   data: Dx.Datapoint[];
 }
-export default ({
-  view,
-  chart,
-  metrics,
-  dimensions,
-  updateChart,
-  selectedDimensions,
-  selectedMetrics,
-  hierarchyType,
-  summaryType,
-  networkType,
-  setLineType,
-  updateMetrics,
-  updateDimensions,
-  lineType,
-  areaType,
-  setAreaType,
-  data
-}: VizControlParams) => {
-  const metricNames = metrics.map(metric => metric.name);
-  const dimensionNames = dimensions.map(dim => dim.name);
+export default () => (
+  // -------------
+  <DxConsumer>
+    {({
+      areaType,
+      chart,
+      data,
+      dimensions,
+      hierarchyType,
+      lineType,
+      metrics,
+      networkType,
+      selectedDimensions,
+      selectedMetrics,
+      summaryType,
+      updateChart,
+      view
+    }: VizControlParams) => {
+      // -------------------
 
-  const updateChartGenerator = (chartProperty: string) => {
-    return (metricOrDim: string) =>
-      updateChart({ chart: { ...chart, [chartProperty]: metricOrDim } });
-  };
+      const metricNames = metrics.map(metric => metric.name);
+      const dimensionNames = dimensions.map(dim => dim.name);
 
-  const getControlHelpText = (view: string, metricOrDim: string) => {
-    if (Object.keys(controlHelpText).find(mOrD => mOrD === metricOrDim)) {
-      const mOrD = metricOrDim as ChartOptionTypes;
-      const views =
-        controlHelpText[mOrD] !== undefined ? controlHelpText[mOrD] : null;
-      if (views == null) {
+      const updateChartGenerator = (chartProperty: string) => {
+        return (metricOrDim: string) =>
+          updateChart({ chart: { ...chart, [chartProperty]: metricOrDim } });
+      };
+
+      const getControlHelpText = (view: string, metricOrDim: string) => {
+        if (Object.keys(controlHelpText).find(mOrD => mOrD === metricOrDim)) {
+          const mOrD = metricOrDim as ChartOptionTypes;
+          const views =
+            controlHelpText[mOrD] !== undefined ? controlHelpText[mOrD] : null;
+          if (views == null) {
+            return "";
+          }
+          if (typeof views === "string") {
+            return views;
+          }
+          if (views[view] != null) {
+            return views[view];
+          } else {
+            return views.default;
+          }
+        }
         return "";
-      }
-      if (typeof views === "string") {
-        return views;
-      }
-      if (views[view] != null) {
-        return views[view];
-      } else {
-        return views.default;
-      }
-    }
-    return "";
-  };
+      };
 
-  return (
-    <React.Fragment>
-      <Wrapper>
-        {(view === "summary" ||
-          view === "scatter" ||
-          view === "hexbin" ||
-          view === "bar" ||
-          view === "network" ||
-          view === "hierarchy") &&
-          metricDimSelector(
-            metricNames,
-            updateChartGenerator("metric1"),
-            view === "scatter" || view === "hexbin" ? "X" : "Metric",
-            true,
-            chart.metric1,
-            getControlHelpText(view, "metric1")
-          )}
-        {(view === "scatter" || view === "hexbin") &&
-          metricDimSelector(
-            metricNames,
-            updateChartGenerator("metric2"),
-            "Y",
-            true,
-            chart.metric2,
-            getControlHelpText(view, "metric2")
-          )}
-        {((view === "scatter" && data.length < 1000) || view === "bar") &&
-          metricDimSelector(
-            metricNames,
-            updateChartGenerator("metric3"),
-            view === "bar" ? "Width" : "Size",
-            false,
-            chart.metric3,
-            getControlHelpText(view, "metric3")
-          )}
-        {(view === "summary" ||
-          view === "scatter" ||
-          (view === "hexbin" && areaType === "contour") ||
-          view === "bar" ||
-          view === "parallel") &&
-          metricDimSelector(
-            dimensionNames,
-            updateChartGenerator("dim1"),
-            view === "summary" ? "Category" : "Color",
-            true,
-            chart.dim1,
-            getControlHelpText(view, "dim1")
-          )}
-        {view === "scatter" &&
-          metricDimSelector(
-            dimensionNames,
-            updateChartGenerator("dim2"),
-            "Labels",
-            false,
-            chart.dim2,
-            getControlHelpText(view, "dim2")
-          )}
-        {view === "hexbin" &&
-          areaType === "contour" &&
-          metricDimSelector(
-            ["by color"],
-            updateChartGenerator("dim3"),
-            "Multiclass",
-            false,
-            chart.dim3,
-            getControlHelpText(view, "dim3")
-          )}
-        {view === "network" &&
-          metricDimSelector(
-            dimensionNames,
-            updateChartGenerator("dim1"),
-            "SOURCE",
-            true,
-            chart.dim1,
-            getControlHelpText(view, "dim1")
-          )}
-        {view === "network" &&
-          metricDimSelector(
-            dimensionNames,
-            updateChartGenerator("dim2"),
-            "TARGET",
-            true,
-            chart.dim2,
-            getControlHelpText(view, "dim2")
-          )}
-        {view === "network" &&
-          metricDimSelector(
-            ["matrix", "arc", "force", "sankey"],
-            selectedNetworkType =>
-              updateChart({ networkType: selectedNetworkType }),
-            "Type",
-            true,
-            networkType,
-            controlHelpText.networkType as string
-          )}
-        {view === "network" &&
-          metricDimSelector(
-            ["static", "scaled"],
-            updateChartGenerator("networkLabel"),
-            "Show Labels",
-            false,
-            chart.networkLabel,
-            controlHelpText.networkLabel as string
-          )}
-        {view === "hierarchy" &&
-          metricDimSelector(
-            ["dendrogram", "treemap", "partition", "sunburst"],
-            selectedHierarchyType =>
-              updateChart({ hierarchyType: selectedHierarchyType }),
-            "Type",
-            true,
-            hierarchyType,
-            controlHelpText.hierarchyType as string
-          )}
-        {view === "summary" &&
-          metricDimSelector(
-            ["violin", "boxplot", "joy", "heatmap", "histogram"],
-            selectedSummaryType =>
-              updateChart({ summaryType: selectedSummaryType }),
-            "Type",
-            true,
-            summaryType,
-            controlHelpText.summaryType as string
-          )}
-        {view === "line" &&
-          metricDimSelector(
-            ["array-order", ...metricNames],
-            updateChartGenerator("timeseriesSort"),
-            "Sort by",
-            true,
-            chart.timeseriesSort,
-            controlHelpText.timeseriesSort as string
-          )}
-        {view === "line" && (
-          <div
-            title={controlHelpText.lineType as string}
-            style={{ display: "inline-block" }}
-          >
-            <div>
-              <Code>Chart Type</Code>
-            </div>
-            <StyledButtonGroup vertical>
-              {availableLineTypes.map(lineTypeOption => (
-                <Button
-                  key={lineTypeOption.type}
-                  className={`button-text ${lineType === lineTypeOption.type &&
-                    "selected"}`}
-                  active={lineType === lineTypeOption.type}
-                  onClick={() => setLineType(lineTypeOption.type)}
-                >
-                  {lineTypeOption.label}
-                </Button>
-              ))}
-            </StyledButtonGroup>
-          </div>
-        )}
-        {view === "hexbin" && (
-          <div
-            className="control-wrapper"
-            title={controlHelpText.areaType as string}
-          >
-            <div>
-              <Code>Chart Type</Code>
-            </div>
-            <StyledButtonGroup vertical>
-              {availableAreaTypes.map(areaTypeOption => {
-                const areaTypeOptionType = areaTypeOption.type;
-                if (
-                  areaTypeOptionType === "contour" ||
-                  areaTypeOptionType === "hexbin" ||
-                  areaTypeOptionType === "heatmap"
-                ) {
-                  return (
+      // -------------------------------
+      return (
+        <React.Fragment>
+          <Wrapper>
+            {(view === "summary" ||
+              view === "scatter" ||
+              view === "hexbin" ||
+              view === "bar" ||
+              view === "network" ||
+              view === "hierarchy") &&
+              metricDimSelector(
+                metricNames,
+                updateChartGenerator("metric1"),
+                view === "scatter" || view === "hexbin" ? "X" : "Metric",
+                true,
+                chart.metric1,
+                getControlHelpText(view, "metric1")
+              )}
+            {(view === "scatter" || view === "hexbin") &&
+              metricDimSelector(
+                metricNames,
+                updateChartGenerator("metric2"),
+                "Y",
+                true,
+                chart.metric2,
+                getControlHelpText(view, "metric2")
+              )}
+            {((view === "scatter" && data.length < 1000) || view === "bar") &&
+              metricDimSelector(
+                metricNames,
+                updateChartGenerator("metric3"),
+                view === "bar" ? "Width" : "Size",
+                false,
+                chart.metric3,
+                getControlHelpText(view, "metric3")
+              )}
+            {(view === "summary" ||
+              view === "scatter" ||
+              (view === "hexbin" && areaType === "contour") ||
+              view === "bar" ||
+              view === "parallel") &&
+              metricDimSelector(
+                dimensionNames,
+                updateChartGenerator("dim1"),
+                view === "summary" ? "Category" : "Color",
+                true,
+                chart.dim1,
+                getControlHelpText(view, "dim1")
+              )}
+            {view === "scatter" &&
+              metricDimSelector(
+                dimensionNames,
+                updateChartGenerator("dim2"),
+                "Labels",
+                false,
+                chart.dim2,
+                getControlHelpText(view, "dim2")
+              )}
+            {view === "hexbin" &&
+              areaType === "contour" &&
+              metricDimSelector(
+                ["by color"],
+                updateChartGenerator("dim3"),
+                "Multiclass",
+                false,
+                chart.dim3,
+                getControlHelpText(view, "dim3")
+              )}
+            {view === "network" &&
+              metricDimSelector(
+                dimensionNames,
+                updateChartGenerator("dim1"),
+                "SOURCE",
+                true,
+                chart.dim1,
+                getControlHelpText(view, "dim1")
+              )}
+            {view === "network" &&
+              metricDimSelector(
+                dimensionNames,
+                updateChartGenerator("dim2"),
+                "TARGET",
+                true,
+                chart.dim2,
+                getControlHelpText(view, "dim2")
+              )}
+            {view === "network" &&
+              metricDimSelector(
+                ["matrix", "arc", "force", "sankey"],
+                selectedNetworkType =>
+                  updateChart({ networkType: selectedNetworkType }),
+                "Type",
+                true,
+                networkType,
+                controlHelpText.networkType as string
+              )}
+            {view === "network" &&
+              metricDimSelector(
+                ["static", "scaled"],
+                updateChartGenerator("networkLabel"),
+                "Show Labels",
+                false,
+                chart.networkLabel,
+                controlHelpText.networkLabel as string
+              )}
+            {view === "hierarchy" &&
+              metricDimSelector(
+                ["dendrogram", "treemap", "partition", "sunburst"],
+                selectedHierarchyType =>
+                  updateChart({ hierarchyType: selectedHierarchyType }),
+                "Type",
+                true,
+                hierarchyType,
+                controlHelpText.hierarchyType as string
+              )}
+            {view === "summary" &&
+              metricDimSelector(
+                ["violin", "boxplot", "joy", "heatmap", "histogram"],
+                selectedSummaryType =>
+                  updateChart({ summaryType: selectedSummaryType }),
+                "Type",
+                true,
+                summaryType,
+                controlHelpText.summaryType as string
+              )}
+            {view === "line" &&
+              metricDimSelector(
+                ["array-order", ...metricNames],
+                updateChartGenerator("timeseriesSort"),
+                "Sort by",
+                true,
+                chart.timeseriesSort,
+                controlHelpText.timeseriesSort as string
+              )}
+            {view === "line" && (
+              <div
+                title={controlHelpText.lineType as string}
+                style={{ display: "inline-block" }}
+              >
+                <div>
+                  <Code>Chart Type</Code>
+                </div>
+                <StyledButtonGroup vertical>
+                  {availableLineTypes.map(lineTypeOption => (
                     <Button
-                      className={`button-text ${areaType ===
-                        areaTypeOptionType && "selected"}`}
-                      key={areaTypeOptionType}
-                      onClick={() => setAreaType(areaTypeOptionType)}
-                      active={areaType === areaTypeOptionType}
+                      key={lineTypeOption.type}
+                      className={`button-text ${lineType ===
+                        lineTypeOption.type && "selected"}`}
+                      active={lineType === lineTypeOption.type}
+                      onClick={() =>
+                        updateChart({ lineType: lineTypeOption.type })
+                      }
                     >
-                      {areaTypeOption.label}
+                      {lineTypeOption.label}
                     </Button>
-                  );
-                } else {
-                  return <div />;
-                }
-              })}
-            </StyledButtonGroup>
-          </div>
-        )}
-        {view === "hierarchy" && (
-          <div
-            className="control-wrapper"
-            title={controlHelpText.nestingDimensions as string}
-          >
-            <div>
-              <Code>Nesting</Code>
-            </div>
-            {selectedDimensions.length === 0
-              ? "Select categories to nest"
-              : `root, ${selectedDimensions.join(", ")}`}
-          </div>
-        )}
-        {(view === "bar" || view === "hierarchy") && (
-          <div
-            className="control-wrapper"
-            title={controlHelpText.barDimensions as string}
-          >
-            <div>
-              <Code>Categories</Code>
-            </div>
-            <StyledButtonGroup vertical>
-              {dimensions.map(dim => (
-                <Button
-                  key={`dimensions-select-${dim.name}`}
-                  className={`button-text ${selectedDimensions.indexOf(
-                    dim.name
-                  ) !== -1 && "selected"}`}
-                  onClick={() => updateDimensions(dim.name)}
-                  active={selectedDimensions.indexOf(dim.name) !== -1}
-                >
-                  {dim.name}
-                </Button>
-              ))}
-            </StyledButtonGroup>
-          </div>
-        )}
-        {view === "line" && (
-          <div
-            className="control-wrapper"
-            title={controlHelpText.lineDimensions as string}
-          >
-            <div>
-              <Code>Metrics</Code>
-            </div>
-            <StyledButtonGroup vertical>
-              {metrics.map(metric => (
-                <Button
-                  key={`metrics-select-${metric.name}`}
-                  className={`button-text ${selectedMetrics.indexOf(
-                    metric.name
-                  ) !== -1 && "selected"}`}
-                  onClick={() => updateMetrics(metric.name)}
-                  active={selectedMetrics.indexOf(metric.name) !== -1}
-                >
-                  {metric.name}
-                </Button>
-              ))}
-            </StyledButtonGroup>
-          </div>
-        )}
-      </Wrapper>
-    </React.Fragment>
-  );
-};
+                  ))}
+                </StyledButtonGroup>
+              </div>
+            )}
+            {view === "hexbin" && (
+              <div
+                className="control-wrapper"
+                title={controlHelpText.areaType as string}
+              >
+                <div>
+                  <Code>Chart Type</Code>
+                </div>
+                <StyledButtonGroup vertical>
+                  {availableAreaTypes.map(areaTypeOption => {
+                    const areaTypeOptionType = areaTypeOption.type;
+                    if (
+                      areaTypeOptionType === "contour" ||
+                      areaTypeOptionType === "hexbin" ||
+                      areaTypeOptionType === "heatmap"
+                    ) {
+                      return (
+                        <Button
+                          className={`button-text ${areaType ===
+                            areaTypeOptionType && "selected"}`}
+                          key={areaTypeOptionType}
+                          onClick={() =>
+                            updateChart({ areaType: areaTypeOptionType })
+                          }
+                          active={areaType === areaTypeOptionType}
+                        >
+                          {areaTypeOption.label}
+                        </Button>
+                      );
+                    } else {
+                      return <div />;
+                    }
+                  })}
+                </StyledButtonGroup>
+              </div>
+            )}
+            {view === "hierarchy" && (
+              <div
+                className="control-wrapper"
+                title={controlHelpText.nestingDimensions as string}
+              >
+                <div>
+                  <Code>Nesting</Code>
+                </div>
+                {selectedDimensions.length === 0
+                  ? "Select categories to nest"
+                  : `root, ${selectedDimensions.join(", ")}`}
+              </div>
+            )}
+            {(view === "bar" || view === "hierarchy") && (
+              <div
+                className="control-wrapper"
+                title={controlHelpText.barDimensions as string}
+              >
+                <div>
+                  <Code>Categories</Code>
+                </div>
+                <StyledButtonGroup vertical>
+                  {dimensions.map(dim => (
+                    <Button
+                      key={`dimensions-select-${dim.name}`}
+                      className={`button-text ${selectedDimensions.indexOf(
+                        dim.name
+                      ) !== -1 && "selected"}`}
+                      onClick={() =>
+                        updateChart(fieldsReducer(selectedDimensions, dim.name))
+                      }
+                      active={selectedDimensions.indexOf(dim.name) !== -1}
+                    >
+                      {dim.name}
+                    </Button>
+                  ))}
+                </StyledButtonGroup>
+              </div>
+            )}
+            {view === "line" && (
+              <div
+                className="control-wrapper"
+                title={controlHelpText.lineDimensions as string}
+              >
+                <div>
+                  <Code>Metrics</Code>
+                </div>
+                <StyledButtonGroup vertical>
+                  {metrics.map(metric => (
+                    <Button
+                      key={`metrics-select-${metric.name}`}
+                      className={`button-text ${selectedMetrics.indexOf(
+                        metric.name
+                      ) !== -1 && "selected"}`}
+                      onClick={() =>
+                        updateChart(fieldsReducer(selectedMetrics, metric.name))
+                      }
+                      active={selectedMetrics.indexOf(metric.name) !== -1}
+                    >
+                      {metric.name}
+                    </Button>
+                  ))}
+                </StyledButtonGroup>
+              </div>
+            )}
+          </Wrapper>
+        </React.Fragment>
+      );
+      // ---------
+    }}
+  </DxConsumer>
+  // ------------
+);
