@@ -7,7 +7,7 @@ import { getDxProps } from "../__mocks__/dx-props";
 import DataExplorerProvider from "../src/index";
 import { Props } from "../src/index";
 
-import { Bar, Grid, Summary } from "../src/charts/";
+import { Bar, Grid, Line, Summary } from "../src/charts/";
 import { Toolbar } from "../src/components/Toolbar";
 import { Display } from "../src/Display";
 import * as Dx from "../src/types";
@@ -78,7 +78,7 @@ describe.only("Toolbar component", () => {
     expect(wrapper.find(Summary)).toHaveLength(1);
   });
 
-  it.skip("Renders a line chart", () => {
+  it("Renders a line chart", () => {
     const wrapper = mount(
       <DataExplorer data={dataExplorerProps.data} initialView={"line"} />
     );

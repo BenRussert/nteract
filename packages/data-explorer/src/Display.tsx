@@ -6,7 +6,7 @@ import {
 } from "semiotic";
 import styled from "styled-components";
 
-import { Bar, Grid, Summary } from "./charts/";
+import { Bar, Grid, Line, Summary } from "./charts/";
 import { SemioticWrapper } from "./css/semiotic-wrapper";
 import * as Dx from "./types";
 export interface DisplayProps {
@@ -57,6 +57,7 @@ export class Display extends React.Component<{}, DisplayState> {
                 <SemioticWrapper>
                   {view === "bar" ? <Bar /> : null}
                   {view === "summary" ? <Summary /> : null}
+                  {view === "line" ? <Line /> : null}
                 </SemioticWrapper>
               }
             </FlexItem>

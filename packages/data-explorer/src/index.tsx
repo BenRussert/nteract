@@ -1,6 +1,5 @@
 import * as React from "react";
 
-import { Grid } from "./charts/";
 import { MetadataWarning } from "./components/MetadataWarning";
 import { Toolbar } from "./components/Toolbar";
 import { defaultColors } from "./settings";
@@ -52,7 +51,7 @@ export interface State {
   data: Dx.Datapoint[];
   dimensions: Dx.Dimension[];
   schema: Dx.Schema;
-  metrics: Dx.Field[];
+  metrics: Dx.Metric[];
   primaryKey: Array<Dx.Field["name"]>;
   //
   selectedDimensions: string[];
@@ -85,12 +84,14 @@ export interface DxContextValues {
   hierarchyType: Dx.HierarchyType;
   lineType: Dx.LineType;
   metadata: Dx.Metadata;
+  metrics: Dx.Metric[];
   networkType: Dx.NetworkType;
   pieceType: Dx.PieceType;
   primaryKey: Array<Dx.Field["name"]>;
   responsiveSize: number[];
   schema: Dx.Schema;
   selectedDimensions: string[];
+  selectedMetrics: string[];
   summaryType: Dx.SummaryType;
   view: Dx.View;
 }
@@ -125,7 +126,9 @@ const DxContext = React.createContext<DxContextValues>({
   view: "grid",
   responsiveSize: defaultResponsiveSize,
   colors: defaultColors,
-  selectedDimensions: []
+  selectedDimensions: [],
+  selectedMetrics: [],
+  metrics: []
 });
 
 const DxConsumer = DxContext.Consumer;
@@ -323,12 +326,14 @@ class DataExplorerProvider extends React.PureComponent<Partial<Props>, State> {
       hierarchyType: this.state.hierarchyType,
       lineType: this.state.lineType,
       metadata: this.state.metadata,
+      metrics: this.state.metrics,
       networkType: this.state.networkType,
       pieceType: this.state.pieceType,
       primaryKey: this.state.primaryKey,
       responsiveSize: this.state.responsiveSize,
       schema: this.state.schema,
       selectedDimensions: this.state.selectedDimensions,
+      selectedMetrics: this.state.selectedMetrics,
       setColor: this.setColor,
       setGrid: this.setGrid,
       setView: this.setView,

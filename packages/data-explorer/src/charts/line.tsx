@@ -1,7 +1,9 @@
 import { scaleLinear, scaleTime } from "d3-scale";
 import { curveMonotoneX } from "d3-shape";
 import * as React from "react";
+import { ResponsiveXYFrame } from "semiotic";
 
+import { DxConsumer, DxContextValues } from "../index";
 import TooltipContent from "../tooltip-content";
 import * as Dx from "../types";
 import { numeralFormatting } from "../utilities";
@@ -171,4 +173,40 @@ export const semioticLineChart = (
       );
     }
   };
+};
+
+export const Line = () => {
+  return (
+    <DxConsumer>
+      {(context: DxContextValues) => {
+        const {
+          data,
+          schema,
+          responsiveSize,
+          chart,
+          colors,
+          lineType,
+          metrics,
+          primaryKey,
+          selectedMetrics
+        } = context;
+        const lineChartOptions: LineOptions = {
+          chart,
+          colors,
+          lineType,
+          metrics,
+          primaryKey,
+          selectedMetrics
+        };
+        const vizProps = semioticLineChart(data, schema, lineChartOptions);
+        return (
+          <ResponsiveXYFrame
+            responsiveWidth
+            size={responsiveSize}
+            {...vizProps}
+          />
+        );
+      }}
+    </DxConsumer>
+  );
 };
