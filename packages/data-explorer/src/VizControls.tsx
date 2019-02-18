@@ -287,6 +287,7 @@ export default () => (
       updateChart,
       view
     }: VizControlParams) => {
+      if(view === 'grid') return null;
       const metricNames = metrics.map(metric => metric.name);
       const dimensionNames = dimensions.map(dim => dim.name);
 
