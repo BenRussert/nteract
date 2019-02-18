@@ -240,7 +240,7 @@ const availableAreaTypes = [
   }
 ];
 
-// Pure "Reducer" to calculate new state "selectedMetrics" or "selectedDimensions"
+// Pure reducer to calculate new state "selectedMetrics" or "selectedDimensions"
 type SelectedFields = Array<Dx.Metric["name"]> | Array<Dx.Dimension["name"]>;
 function fieldsReducer(
   selectedFields: SelectedFields,
@@ -271,7 +271,6 @@ interface VizControlParams {
   data: Dx.Datapoint[];
 }
 export default () => (
-  // -------------
   <DxConsumer>
     {({
       areaType,
@@ -288,8 +287,6 @@ export default () => (
       updateChart,
       view
     }: VizControlParams) => {
-      // -------------------
-
       const metricNames = metrics.map(metric => metric.name);
       const dimensionNames = dimensions.map(dim => dim.name);
 
@@ -318,7 +315,6 @@ export default () => (
         return "";
       };
 
-      // -------------------------------
       return (
         <React.Fragment>
           <Wrapper>
@@ -591,8 +587,6 @@ export default () => (
           </Wrapper>
         </React.Fragment>
       );
-      // ---------
     }}
   </DxConsumer>
-  // ------------
 );
