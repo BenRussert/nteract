@@ -142,11 +142,12 @@ interface State {
 }
 
 interface Props {
-  data: { data: Dx.Datapoint[]; schema: Dx.Schema };
+  data: Dx.Datapoint[];
+  schema: Dx.Schema;
   height: number;
 }
 
-class DataResourceTransformGrid extends React.PureComponent<Props, State> {
+export class Grid extends React.PureComponent<Props, State> {
   static defaultProps = {
     metadata: {},
     height: 500
@@ -161,10 +162,7 @@ class DataResourceTransformGrid extends React.PureComponent<Props, State> {
   }
 
   render() {
-    const {
-      data: { data, schema },
-      height
-    } = this.props;
+    const { data, schema, height } = this.props;
 
     const { filters, showFilters } = this.state;
 
@@ -226,5 +224,3 @@ class DataResourceTransformGrid extends React.PureComponent<Props, State> {
     );
   }
 }
-
-export default DataResourceTransformGrid;

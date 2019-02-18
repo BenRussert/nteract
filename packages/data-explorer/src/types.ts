@@ -1,3 +1,21 @@
+export interface dxMetaProps {
+  areaType?: AreaType;
+  chart?: Chart;
+  colors?: string[];
+  hierarchyType?: HierarchyType;
+  lineType?: LineType;
+  networkType?: NetworkType;
+  pieceType?: PieceType;
+  selectedDimensions?: string[];
+  selectedMetrics?: string[];
+  summaryType?: SummaryType;
+  view?: View;
+}
+
+export interface Metadata {
+  dx: dxMetaProps;
+  sampled?: boolean;
+}
 export interface ChartOptions {
   metrics: Metric[];
   dimensions: Dimension[];

@@ -1,7 +1,9 @@
 import { scaleLinear } from "d3-scale";
 import * as React from "react";
+import { ResponsiveOrdinalFrame } from "semiotic";
 
 import HTMLLegend from "../HTMLLegend";
+import { DxConsumer, DxContextValues } from "../index";
 import TooltipContent from "../tooltip-content";
 import * as Dx from "../types";
 import { numeralFormatting } from "../utilities";
@@ -114,4 +116,43 @@ export const semioticSummaryChart = (
   };
 
   return summarySettings;
+};
+
+export const Summary = () => {
+  // useMemo...
+  return (
+    <DxConsumer>
+      {(context: DxContextValues) => {
+        const {
+          data,
+          schema,
+          chart,
+          colors,
+          primaryKey,
+          responsiveSize,
+          setColor,
+          summaryType
+        } = context;
+        const summaryChartOptions = {
+          chart,
+          colors,
+          primaryKey,
+          setColor,
+          summaryType
+        };
+        const vizProps = semioticSummaryChart(
+          data,
+          schema,
+          summaryChartOptions
+        );
+        return (
+          <ResponsiveOrdinalFrame
+            responsiveWidth
+            size={responsiveSize}
+            {...vizProps}
+          />
+        );
+      }}
+    </DxConsumer>
+  );
 };

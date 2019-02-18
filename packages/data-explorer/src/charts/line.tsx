@@ -57,7 +57,6 @@ export const semioticLineChart = (
           timeseriesSort === "array-order"
             ? data
             : data.sort(
-                // Using some questionable type assertions here
                 (datapointA, datapointB) =>
                   datapointA[timeseriesSort] - datapointB[timeseriesSort]
               );

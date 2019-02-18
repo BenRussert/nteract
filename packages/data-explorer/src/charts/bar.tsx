@@ -1,9 +1,11 @@
 import * as React from "react";
+import { ResponsiveOrdinalFrame } from "semiotic";
 
 import HTMLLegend from "../HTMLLegend";
 import TooltipContent from "../tooltip-content";
 import { numeralFormatting } from "../utilities";
 
+import { DxConsumer, DxContextValues } from "../index";
 import * as Dx from "../types";
 import { sortByOrdinalRange } from "./shared";
 
@@ -181,4 +183,37 @@ export const semioticBarChart = (
   };
 
   return barSettings;
+};
+
+export const Bar = () => {
+  // useMemo...
+  return (
+    <DxConsumer>
+      {(context: DxContextValues) => {
+        const {
+          data,
+          schema,
+          responsiveSize,
+          setColor,
+          chart,
+          colors,
+          selectedDimensions
+        } = context;
+        const barChartOptions = {
+          setColor,
+          chart,
+          colors,
+          selectedDimensions
+        };
+        const vizProps = semioticBarChart(data, schema, barChartOptions);
+        return (
+          <ResponsiveOrdinalFrame
+            responsiveWidth
+            size={responsiveSize}
+            {...vizProps}
+          />
+        );
+      }}
+    </DxConsumer>
+  );
 };

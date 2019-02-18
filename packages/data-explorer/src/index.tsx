@@ -1,15 +1,20 @@
 import * as React from "react";
 
-import DataResourceTransformGrid from "./charts/grid";
-import { semioticSettings } from "./charts/settings";
+import { Grid } from "./charts/";
+import { MetadataWarning } from "./components/MetadataWarning";
 import { Toolbar } from "./components/Toolbar";
-import { colors } from "./settings";
+import { defaultColors } from "./settings";
 import VizControls from "./VizControls";
+
+export { Display } from "./Display";
+export { Toolbar } from "./components/Toolbar";
 
 const mediaType = "application/vnd.dataresource+json";
 
 import styled from "styled-components";
+import { Context } from "tern";
 import * as Dx from "./types";
+
 import {
   AreaType,
   Chart,
@@ -21,126 +26,45 @@ import {
   View
 } from "./types";
 
-interface dxMetaProps {
-  view?: View;
-  lineType?: LineType;
-  areaType?: AreaType;
-  selectedDimensions?: string[];
-  selectedMetrics?: string[];
-  pieceType?: PieceType;
-  summaryType?: SummaryType;
-  networkType?: NetworkType;
-  hierarchyType?: HierarchyType;
-  colors?: string[];
-  chart?: Chart;
-}
-
-interface Metadata {
-  dx: dxMetaProps;
-  sampled?: boolean;
-}
-
-interface Props {
+export interface Props {
   data: Dx.DataProps;
-  metadata: Metadata;
-  theme?: string;
   expanded?: boolean;
   height?: number;
-  mediaType: "application/vnd.dataresource+json";
   initialView: View;
-  onMetadataChange?: ({ dx }: { dx: dxMetaProps }, mediaType: string) => void;
+  mediaType: "application/vnd.dataresource+json";
+  metadata: Dx.Metadata;
+  models?: {};
+  theme?: string;
+  onMetadataChange?: (
+    { dx }: { dx: Dx.dxMetaProps },
+    mediaType: string
+  ) => void;
 }
-
-interface State {
-  view: View;
+export interface State {
+  areaType: AreaType;
   colors: string[];
-  metrics: Dx.Field[];
-  dimensions: Dx.Dimension[];
-  selectedMetrics: string[];
-  selectedDimensions: string[];
-  networkType: NetworkType;
   hierarchyType: HierarchyType;
+  lineType: LineType;
+  networkType: NetworkType;
   pieceType: PieceType;
   summaryType: SummaryType;
-  lineType: LineType;
-  areaType: AreaType;
-  chart: Chart;
-  displayChart: DisplayChart;
-  primaryKey: string[];
+  //
   data: Dx.Datapoint[];
-}
-
-const generateChartKey = ({
-  view,
-  lineType,
-  areaType,
-  selectedDimensions,
-  selectedMetrics,
-  pieceType,
-  summaryType,
-  networkType,
-  hierarchyType,
-  chart
-}: {
-  view: View;
-  lineType: LineType;
-  areaType: AreaType;
+  dimensions: Dx.Dimension[];
+  schema: Dx.Schema;
+  metrics: Dx.Field[];
+  primaryKey: Array<Dx.Field["name"]>;
+  //
   selectedDimensions: string[];
   selectedMetrics: string[];
-  pieceType: PieceType;
-  summaryType: SummaryType;
-  networkType: NetworkType;
-  hierarchyType: HierarchyType;
+  //
+  view: View;
   chart: Chart;
-}) =>
-  `${view}-${lineType}-${areaType}-${selectedDimensions.join(
-    ","
-  )}-${selectedMetrics.join(
-    ","
-  )}-${pieceType}-${summaryType}-${networkType}-${hierarchyType}-${JSON.stringify(
-    chart
-  )}`;
-
-interface DisplayChart {
-  [chartKey: string]: React.ReactNode;
+  metadata: Dx.Metadata;
+  //
+  updateChart: (valuesToUpdate: Partial<State>) => void;
+  responsiveSize: number[];
 }
-/*
-  contour is an option for scatterplot
-  pie is a transform on bar
-*/
-
-const defaultResponsiveSize = [500, 300];
-
-const MetadataWarningWrapper = styled.div`
-  & {
-    font-family: Source Sans Pro, Helvetica Neue, Helvetica, Arial, sans-serif;
-  }
-`;
-
-const MetadataWarningContent = styled.div`
-  & {
-    backgroundcolor: #cce;
-    padding: 10px;
-    paddingleft: 20px;
-  }
-`;
-
-const MetadataWarning = ({ metadata }: { metadata: Metadata }) => {
-  const warning =
-    metadata && metadata.sampled ? (
-      <span>
-        <b>NOTE:</b> This data is sampled
-      </span>
-    ) : null;
-
-  return (
-    <MetadataWarningWrapper>
-      {warning ? (
-        <MetadataWarningContent>{warning}</MetadataWarningContent>
-      ) : null}
-    </MetadataWarningWrapper>
-  );
-};
 
 const FlexWrapper = styled.div`
   display: flex;
@@ -148,65 +72,66 @@ const FlexWrapper = styled.div`
   width: 100%;
 `;
 
-const FlexItem = styled.div`
-  flex: 1;
-`;
+export interface DxContextValues {
+  updateChart: (updatedState: Partial<State>) => void;
+  setColor: (newColors: string[]) => void;
+  setGrid: () => void;
+  setView: (view: Dx.View) => void;
+  areaType: Dx.AreaType;
+  chart: Dx.Chart;
+  colors: string[];
+  data: State["data"];
+  dimensions: Dx.Dimension[];
+  hierarchyType: Dx.HierarchyType;
+  lineType: Dx.LineType;
+  metadata: Dx.Metadata;
+  networkType: Dx.NetworkType;
+  pieceType: Dx.PieceType;
+  primaryKey: Array<Dx.Field["name"]>;
+  responsiveSize: number[];
+  schema: Dx.Schema;
+  selectedDimensions: string[];
+  summaryType: Dx.SummaryType;
+  view: Dx.View;
+}
 
-const SemioticWrapper = styled.div`
-  width: "calc(100vw - 200px)";
-  .html-legend-item {
-    color: var(--theme-app-fg);
-  }
+const defaultResponsiveSize = [500, 300];
+const DxContext = React.createContext<DxContextValues>({
+  setColor: (newColors = defaultColors) => null,
+  setGrid: () => null,
+  setView: (view = "grid") => null,
+  updateChart: updatedState => null,
+  chart: {
+    dim1: "none",
+    dim2: "none",
+    dim3: "none",
+    metric1: "none",
+    metric2: "none",
+    metric3: "none",
+    timeseriesSort: "array-order",
+    networkLabel: "none"
+  },
+  areaType: "hexbin",
+  data: [{}],
+  dimensions: [],
+  hierarchyType: "dendrogram",
+  lineType: "line",
+  metadata: { dx: {} },
+  networkType: "force",
+  pieceType: "bar",
+  primaryKey: [],
+  schema: { fields: [], pandas_version: "", primaryKey: [] },
+  summaryType: "violin",
+  view: "grid",
+  responsiveSize: defaultResponsiveSize,
+  colors: defaultColors,
+  selectedDimensions: []
+});
 
-  .tick > path {
-    stroke: lightgray;
-  }
+const DxConsumer = DxContext.Consumer;
+export { DxConsumer };
 
-  .axis-labels,
-  .ordinal-labels {
-    fill: var(--theme-app-fg);
-    font-size: 14px;
-  }
-
-  path.connector,
-  path.connector-end {
-    stroke: var(--theme-app-fg);
-  }
-
-  path.connector-end {
-    fill: var(--theme-app-fg);
-  }
-
-  text.annotation-note-label,
-  text.legend-title,
-  .legend-item text {
-    fill: var(--theme-app-fg);
-    stroke: none;
-  }
-
-  .xyframe-area > path {
-    stroke: var(--theme-app-fg);
-  }
-
-  .axis-baseline {
-    stroke-opacity: 0.25;
-    stroke: var(--theme-app-fg);
-  }
-  circle.frame-hover {
-    fill: none;
-    stroke: gray;
-  }
-  .rect {
-    stroke: green;
-    stroke-width: 5px;
-    stroke-opacity: 0.5;
-  }
-  rect.selection {
-    opacity: 0.5;
-  }
-`;
-
-class DataExplorer extends React.PureComponent<Partial<Props>, State> {
+class DataExplorerProvider extends React.PureComponent<Partial<Props>, State> {
   static MIMETYPE = mediaType;
 
   static defaultProps = {
@@ -226,8 +151,8 @@ class DataExplorer extends React.PureComponent<Partial<Props>, State> {
     // Handle case of metadata being empty yet dx not set
     const dx = metadata.dx || {};
     const chart = dx.chart || {};
-
-    const { fields = [], primaryKey = [] } = props.data.schema;
+    const schema = props.data.schema;
+    const { fields = [], primaryKey = [] } = schema;
 
     const dimensions = fields.filter(
       field =>
@@ -260,21 +185,19 @@ class DataExplorer extends React.PureComponent<Partial<Props>, State> {
         field => !primaryKey.find(pkey => pkey === field.name)
       ) as Dx.Metric[];
 
-    const displayChart: DisplayChart = {};
     this.state = {
       view: initialView,
-      lineType: "line",
-      areaType: "hexbin",
       selectedDimensions: [],
       selectedMetrics: [],
+      lineType: "line",
+      areaType: "hexbin",
       pieceType: "bar",
       summaryType: "violin",
       networkType: "force",
       hierarchyType: "dendrogram",
       dimensions,
       metrics,
-      colors,
-      // ui: {},
+      colors: defaultColors,
       chart: {
         metric1: (metrics[0] && metrics[0].name) || "none",
         metric2: (metrics[1] && metrics[1].name) || "none",
@@ -286,144 +209,72 @@ class DataExplorer extends React.PureComponent<Partial<Props>, State> {
         networkLabel: "none",
         ...chart
       },
-      displayChart,
       primaryKey,
       data,
-      ...dx
-    };
-  }
+      schema,
+      metadata,
 
-  componentDidMount() {
-    // This is necessary to render any charts based on passed metadata because the grid doesn't result from the updateChart function but any other view does
-    if (this.state.view !== "grid") {
-      this.updateChart(this.state);
-    }
+      ...dx,
+      updateChart: this.updateChart,
+      responsiveSize: [500, 300]
+    };
   }
 
   updateChart = (updatedState: Partial<State>) => {
     const {
-      view,
-      dimensions,
-      metrics,
-      chart,
-      lineType,
       areaType,
+      chart,
+      colors,
+      hierarchyType,
+      lineType,
+      networkType,
+      pieceType,
       selectedDimensions,
       selectedMetrics,
-      pieceType,
       summaryType,
-      networkType,
-      hierarchyType,
-      colors,
-      primaryKey,
-      data: stateData
+      view
     } = { ...this.state, ...updatedState };
 
     if (!this.props.data && !this.props.metadata && !this.props.initialView) {
       return;
     }
 
-    const { data, height, onMetadataChange } = this.props;
-
-    const { Frame, chartGenerator } = semioticSettings[view];
-
-    const chartKey = generateChartKey({
-      view,
-      lineType,
-      areaType,
-      selectedDimensions,
-      selectedMetrics,
-      pieceType,
-      summaryType,
-      networkType,
-      hierarchyType,
-      chart
-    });
-
-    const frameSettings = chartGenerator(stateData, data!.schema, {
-      metrics,
-      dimensions,
-      chart,
-      colors,
-      height,
-      lineType,
-      areaType,
-      selectedDimensions,
-      selectedMetrics,
-      pieceType,
-      summaryType,
-      networkType,
-      hierarchyType,
-      primaryKey,
-      setColor: this.setColor
-    });
-
-    const display: React.ReactNode = (
-      <SemioticWrapper>
-        <Frame
-          responsiveWidth
-          size={defaultResponsiveSize}
-          {...frameSettings}
-        />
-        <VizControls
-          {...{
-            data: stateData,
-            view,
-            chart,
-            metrics,
-            dimensions,
-            selectedDimensions,
-            selectedMetrics,
-            hierarchyType,
-            summaryType,
-            networkType,
-            updateChart: this.updateChart,
-            updateDimensions: this.updateDimensions,
-            setLineType: this.setLineType,
-            updateMetrics: this.updateMetrics,
-            lineType,
-            setAreaType: this.setAreaType,
-            areaType
-          }}
-        />
-      </SemioticWrapper>
-    );
-
     // If you pass an onMetadataChange function, then fire it and pass the updated dx settings so someone upstream can update the metadata or otherwise use it
-
-    if (onMetadataChange) {
-      onMetadataChange(
+    if (this.props.onMetadataChange) {
+      this.props.onMetadataChange(
         {
           ...this.props.metadata,
           dx: {
-            view,
-            lineType,
             areaType,
+            chart,
+            colors,
+            hierarchyType,
+            lineType,
+            networkType,
+            pieceType,
             selectedDimensions,
             selectedMetrics,
-            pieceType,
             summaryType,
-            networkType,
-            hierarchyType,
-            colors,
-            chart
+            view
           }
         },
         mediaType
       );
     }
 
-    this.setState(
-      (prevState): any => {
-        return {
-          ...updatedState,
-          displayChart: {
-            ...prevState.displayChart,
-            [chartKey]: display
-          }
-        };
-      }
-    );
+    this.setState({
+      areaType,
+      chart,
+      colors,
+      hierarchyType,
+      lineType,
+      networkType,
+      pieceType,
+      selectedDimensions,
+      selectedMetrics,
+      summaryType,
+      view
+    });
   };
   setView = (view: View) => {
     this.updateChart({ view });
@@ -463,67 +314,39 @@ class DataExplorer extends React.PureComponent<Partial<Props>, State> {
   };
 
   render() {
-    const {
-      view,
-      dimensions,
-      chart,
-      lineType,
-      areaType,
-      selectedDimensions,
-      selectedMetrics,
-      pieceType,
-      summaryType,
-      networkType,
-      hierarchyType
-    } = this.state;
-
-    let display: React.ReactNode = null;
-
-    if (view === "grid") {
-      display = <DataResourceTransformGrid {...this.props as Props} />;
-    } else if (
-      [
-        "line",
-        "scatter",
-        "bar",
-        "network",
-        "summary",
-        "hierarchy",
-        "hexbin",
-        "parallel"
-      ].includes(view)
-    ) {
-      const chartKey = generateChartKey({
-        view,
-        lineType,
-        areaType,
-        selectedDimensions,
-        selectedMetrics,
-        pieceType,
-        summaryType,
-        networkType,
-        hierarchyType,
-        chart
-      });
-
-      display = this.state.displayChart[chartKey];
-    }
-
+    const contextValues: DxContextValues = {
+      areaType: this.state.areaType,
+      chart: this.state.chart,
+      colors: this.state.colors,
+      data: this.state.data,
+      dimensions: this.state.dimensions,
+      hierarchyType: this.state.hierarchyType,
+      lineType: this.state.lineType,
+      metadata: this.state.metadata,
+      networkType: this.state.networkType,
+      pieceType: this.state.pieceType,
+      primaryKey: this.state.primaryKey,
+      responsiveSize: this.state.responsiveSize,
+      schema: this.state.schema,
+      selectedDimensions: this.state.selectedDimensions,
+      setColor: this.setColor,
+      setGrid: this.setGrid,
+      setView: this.setView,
+      summaryType: this.state.summaryType,
+      updateChart: this.state.updateChart,
+      view: this.state.view
+    };
     return (
-      <div>
+      <React.Fragment>
         <MetadataWarning metadata={this.props.metadata!} />
         <FlexWrapper>
-          <FlexItem>{display}</FlexItem>
-          <Toolbar
-            dimensions={dimensions}
-            setGrid={this.setGrid}
-            setView={this.setView}
-            currentView={view}
-          />
+          <DxContext.Provider value={contextValues}>
+            {this.props.children}
+          </DxContext.Provider>
         </FlexWrapper>
-      </div>
+      </React.Fragment>
     );
   }
 }
 
-export default DataExplorer;
+export default DataExplorerProvider;
