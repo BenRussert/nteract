@@ -134,4 +134,20 @@ describe("VizControls component", () => {
     expect(wrapper.find(Toolbar)).toHaveLength(1);
     expect(wrapper.find(VizControls)).toHaveLength(1);
   });
+
+  it.skip("Controls chart type", () => {
+    const wrapper = mount(
+      <DataExplorer data={dataExplorerProps.data} initialView={"line"} />
+    );
+    // click a button and expect metadata to update.
+    // console.log(wrapper.find(".button-text.selected").debug());
+  });
+
+  it.skip("Does not render the VizControls if grid view is active", () => {
+    const wrapper = mount(
+      <DataExplorer data={dataExplorerProps.data} initialView={"grid"} />
+    );
+    expect(wrapper.find(Toolbar)).toHaveLength(1);
+    expect(wrapper.find(VizControls)).toHaveLength(0);
+  });
 });
